@@ -192,7 +192,7 @@
 				
 			var lowScoreIndex = 0;
 			var lowScore = 100;
-			for (var i = 1; i < friendsData.length; i++) {
+			for (var i = 1; i < friendsData.length - 1; i++) {
 				var addedScore = 0;
 				for (var scoreQ = 0; scoreQ < 10; scoreQ++) {
 					addedScore = Math.abs((newFriend.scores[scoreQ] - friendsData[i].scores[scoreQ])) + addedScore;
