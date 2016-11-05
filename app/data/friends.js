@@ -1,9 +1,5 @@
 var friendsData = [
 	{
-		email: '',
-		name: '',
-		photo: '',
-		scores: []
 	}
 ];
 

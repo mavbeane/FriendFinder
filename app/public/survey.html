@@ -5,15 +5,23 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Friend Finder</title>
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-		<link rel="stylesheet" href="../assets/css/styles.css">
+		<link rel="stylesheet" href="/assets/css/styles.css">
 		<script src="https://code.jquery.com/jquery-3.1.0.js" integrity="sha256-slogkvB1K3VOkzAI8QITxV3VzpOnkeNVsKvtkYLMjfk=" crossorigin="anonymous"></script>
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+		<style type="text/css">
+			label, footer {
+				margin-top: 20px;
+			}
+			button {
+				margin-top: 40px;
+			}
+		</style>
 	</head>
 	<body>
 		<div class="container">
 
 			<div class="row">
-			  <div class="col-xs-12 col-md-8">
+			  <div class="col-xs-12 col-md-12">
 			  	<h2>Survey Questions</h2>
 				<div id="survey">
 					<div class="bkg-clr">
@@ -26,7 +34,7 @@
 							<label for="photoLink">Link to photo</label>
 							<input required type="text" class="form-control" id="photoLink" placeholder="Photo">
 					</div>
-					<div class="form-group">
+					<form class="form-group">
 						<label>Question 1</label>
 						<p>I enjoy meeting new people.</p>
 						<select class="form-control" id="qu1">
@@ -130,59 +138,87 @@
 						
 						
 						<button type="submit" id="submit" class="btn btn-primary btn-lg btn-block">Submit</button>
-					</div>
+					</form>
 				</div>
 			  </div>
-			  <div class="col-xs-6 col-md-4"></div>
 			</div>
 			
 		</div>
 
+		<!-- Modal -->
+		<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		  <div class="modal-dialog" role="document">
+		    <div class="modal-content">
+		      <div class="modal-header">
+		        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+		        <h4 class="modal-title" id="myModalLabel">YOUR NEW FRIEND</h4>
+		      </div>
+		      <div class="modal-body">
+		        ...
+		      </div>
+		      <div class="modal-footer">
+		        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+		      </div>
+		    </div>
+		  </div>
+		</div>
+
+		<footer  style="text-align: center">
+			<a href="/api/friends">Friends</a>
+		</footer>
+<script>
+	$('#submit').on('click', function(){
+
+		var newFriend = {
+			friendName: $('#name').val().trim(),
+			friendEmail: $('#email').val().trim(),
+			friendPhoto: $('#photoLink').val().trim(),
+			scores: []				
+		};
 		
-		<script type="text/javascript">
-			$('#submit').on('click', function(){
+		for (var i = 1; i <= 10; i++) {
+			var questionValue = $('#qu' + [i]).val();
+			if (questionValue == null) {
+				newFriend.scores.push('0');
+			} else {
+				newFriend.scores.push(questionValue);
+			};
+		};
 
-				var newFriend = {
-					friendName: $('#name').val().trim(),
-					friendEmail: $('#email').val().trim(),
-					friendPhoto: $('#photoLink').val().trim(),
-					scores: []				
-				};
+		var currentURL = window.location.origin;
+
+		$.ajax({url: currentURL + "/api/friends", method: "GET"})
+	            .done(function(friendsData) {
 				
-				for (var i = 1; i <= 10; i++) {
-					var questionValue = $('#qu' + [i]).val();
-					console.log('qu val ' + questionValue);
-					if (questionValue == null) {
-						newFriend.scores.push('0');
-					} else {
-						newFriend.scores.push(questionValue);
-					};
+			var lowScoreIndex = 0;
+			var lowScore = 100;
+			for (var i = 1; i < friendsData.length; i++) {
+				var addedScore = 0;
+				for (var scoreQ = 0; scoreQ < 10; scoreQ++) {
+					addedScore = Math.abs((newFriend.scores[scoreQ] - friendsData[i].scores[scoreQ])) + addedScore;
 				};
-				
-				console.log('Friend Name: ' + newFriend.friendName);
-				console.log('Friend Email: ' + newFriend.friendEmail);
-				console.log('Friend Photo: ' + newFriend.friendPhoto);
-				console.log(newFriend.scores);
 
-				var currentURL = window.location.origin;
+				if (addedScore < lowScore) {
+					lowScore = addedScore;
+					lowScoreIndex = i;
+				};		
+			};
+			$('.modal-body').html('<p>Name: ' + friendsData[lowScoreIndex].friendName +
+				'</p><p>Email: ' + friendsData[lowScoreIndex].friendEmail + '</p><p><img src="' + friendsData[lowScoreIndex].friendPhoto + '" width="400px" height="auto"></p>');
+			$('#myModal').modal();
+		});
 
-				$post(currentURL + '/api/friends', newFriend, function(data) {
-
-					if(data == true){
-		                alert("You have been added!")
-		            };
-					console.log('Your data has been added');
-					$('#name').val('')
-					$('#email').val('')
-					$('#photoLink').val('')
-					for (var i = 1; i <= 10; i++) {
-						$('#qu' + [i]).val('');
-					};
-				});
-					return false;
-				});	
-		</script>
-		
+		$.post(currentURL + '/api/friends', newFriend, function(data) {
+			$('#name').val('')
+			$('#email').val('')
+			$('#photoLink').val('')
+			for (var i = 1; i <= 10; i++) {
+				$('#qu' + [i]).val('');
+			};
+		});
+		return false;
+	});
+</script>
 
 	</body>
 </html>
